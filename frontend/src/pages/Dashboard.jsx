@@ -64,6 +64,20 @@ export default function Dashboard() {
               <div className="stat-label">Low Stock Items</div>
             </div>
           </div>
+          <div className="stat-card">
+            <div className="stat-icon green">💰</div>
+            <div>
+              <div className="stat-value">${stats.total_revenue.toFixed(2)}</div>
+              <div className="stat-label">Total Revenue</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon blue">🏷️</div>
+            <div>
+              <div className="stat-value">${stats.inventory_value.toFixed(2)}</div>
+              <div className="stat-label">Inventory Value</div>
+            </div>
+          </div>
         </div>
 
         <div className="card">

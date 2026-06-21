@@ -130,3 +130,5 @@ class DashboardStats(BaseModel):
     total_customers: int
     total_orders: int
     low_stock_products: List[ProductResponse]
+    inventory_value: float = 0.0
+    total_revenue: float = 0.0
