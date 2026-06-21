@@ -2,9 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
+from pydantic import BaseModel, field_validator
 from ..database import get_db
 from ..models import Product
 from ..schemas import ProductCreate, ProductUpdate, ProductResponse
+
+
+class StockAdjustment(BaseModel):
+    quantity: int
+
+    @field_validator("quantity")
+    @classmethod
+    def must_be_non_negative(cls, v):
+        if v < 0:
+            raise ValueError("Quantity cannot be negative")
+        return v
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -69,6 +81,20 @@ def update_product(product_id: int, product_update: ProductUpdate, db: Session =
     update_data = product_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(product, field, value)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.patch("/{product_id}/stock", response_model=ProductResponse)
+def update_stock(product_id: int, body: StockAdjustment, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id {product_id} not found"
+        )
+    product.quantity = body.quantity
     db.commit()
     db.refresh(product)
     return product
