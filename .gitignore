@@ -10,6 +10,8 @@ __pycache__/
 .venv/
 venv/
 env/
+oms_venv/
+oms_venv
 *.egg-info/
 dist/
 build/
