@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 from ..database import get_db
-from ..models import Order, OrderItem, Product, Customer
+from ..models import Order, OrderItem, Product, Customer, OrderStatus
 from ..schemas import OrderCreate, OrderResponse
+
+
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -78,6 +83,20 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Order with id {order_id} not found"
         )
+    return order
+
+
+@router.patch("/{order_id}/status", response_model=OrderResponse)
+def update_order_status(order_id: int, body: OrderStatusUpdate, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order with id {order_id} not found"
+        )
+    order.status = body.status
+    db.commit()
+    db.refresh(order)
     return order
 
 
