@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
+from typing import List, Optional
 from ..database import get_db
 from ..models import Product
 from ..schemas import ProductCreate, ProductUpdate, ProductResponse
@@ -24,8 +25,19 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[ProductResponse])
-def get_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return db.query(Product).offset(skip).limit(limit).all()
+def get_products(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = Query(None, description="Search by name or SKU"),
+    low_stock: Optional[bool] = Query(None, description="Filter low-stock items (qty <= 10)"),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Product)
+    if search:
+        q = q.filter(or_(Product.name.ilike(f"%{search}%"), Product.sku.ilike(f"%{search}%")))
+    if low_stock is True:
+        q = q.filter(Product.quantity <= 10)
+    return q.offset(skip).limit(limit).all()
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

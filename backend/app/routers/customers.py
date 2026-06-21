@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
+from typing import List, Optional
 from ..database import get_db
 from ..models import Customer
 from ..schemas import CustomerCreate, CustomerResponse
@@ -24,8 +25,16 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[CustomerResponse])
-def get_customers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return db.query(Customer).offset(skip).limit(limit).all()
+def get_customers(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = Query(None, description="Search by name or email"),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Customer)
+    if search:
+        q = q.filter(or_(Customer.full_name.ilike(f"%{search}%"), Customer.email.ilike(f"%{search}%")))
+    return q.offset(skip).limit(limit).all()
 
 
 @router.get("/{customer_id}", response_model=CustomerResponse)
