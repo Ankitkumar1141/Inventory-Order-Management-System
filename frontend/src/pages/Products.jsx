@@ -7,21 +7,28 @@ const emptyForm = { name: '', sku: '', price: '', quantity: '', description: '' 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const loadProducts = () => {
+  const loadProducts = (searchTerm = '') => {
     setLoading(true);
-    productsApi.getAll()
+    const params = searchTerm ? { params: { search: searchTerm } } : {};
+    productsApi.getAll(params)
       .then(res => setProducts(res.data))
       .catch(() => toast.error('Failed to load products'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { loadProducts(); }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => loadProducts(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const openAdd = () => {
     setEditProduct(null);
@@ -96,6 +103,13 @@ export default function Products() {
         <div className="card">
           <div className="card-header">
             <span className="card-title">📦 Product List ({products.length})</span>
+            <input
+              className="form-control"
+              style={{ width: 220 }}
+              placeholder="🔍 Search name or SKU..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
           </div>
           {loading ? (
             <div className="loading"><div className="spinner" /> Loading...</div>

@@ -9,7 +9,7 @@ const api = axios.create({
 
 // Products
 export const productsApi = {
-  getAll: () => api.get('/products/'),
+  getAll: (config = {}) => api.get('/products/', config),
   getById: (id) => api.get(`/products/${id}`),
   create: (data) => api.post('/products/', data),
   update: (id, data) => api.put(`/products/${id}`, data),
