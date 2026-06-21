@@ -3,11 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../services/api';
 
+const STATUS_OPTIONS = ['pending', 'completed', 'cancelled'];
+
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     ordersApi.getById(id)
@@ -15,6 +18,20 @@ export default function OrderDetail() {
       .catch(() => toast.error('Order not found'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus === order.status) return;
+    setUpdatingStatus(true);
+    try {
+      const res = await ordersApi.updateStatus(id, newStatus);
+      setOrder(res.data);
+      toast.success(`Status updated to "${newStatus}"`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   const handleCancel = async () => {
     if (!window.confirm(`Cancel order #${id}?`)) return;
@@ -82,7 +99,15 @@ export default function OrderDetail() {
             <div className="card-body">
               <div style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 2 }}>Status</div>
-                <div>{statusBadge(order.status)}</div>
+                <select
+                  className="form-control"
+                  value={order.status}
+                  onChange={e => handleStatusChange(e.target.value)}
+                  disabled={updatingStatus}
+                  style={{ width: 'auto' }}
+                >
+                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
               <div style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 2 }}>Date</div>
