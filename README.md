@@ -33,8 +33,8 @@ cp .env.example .env
 docker-compose up --build
 
 # App:     http://localhost:80
-# API:     http://localhost:8000
-# API Docs: http://localhost:8000/docs
+# API:     http://localhost:8001
+# API Docs: http://localhost:8001/docs
 ```
 
 ## API Endpoints
