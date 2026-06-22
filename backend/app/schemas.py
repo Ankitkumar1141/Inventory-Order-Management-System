@@ -4,7 +4,6 @@ from datetime import datetime
 from .models import OrderStatus
 
 
-# Product Schemas
 class ProductBase(BaseModel):
     name: str
     sku: str
@@ -62,7 +61,6 @@ class ProductResponse(ProductBase):
         from_attributes = True
 
 
-# Customer Schemas
 class CustomerBase(BaseModel):
     full_name: str
     email: str
@@ -81,7 +79,6 @@ class CustomerResponse(CustomerBase):
         from_attributes = True
 
 
-# Order Item Schemas
 class OrderItemCreate(BaseModel):
     product_id: int
     quantity: int
@@ -105,7 +102,6 @@ class OrderItemResponse(BaseModel):
         from_attributes = True
 
 
-# Order Schemas
 class OrderCreate(BaseModel):
     customer_id: int
     items: List[OrderItemCreate]
@@ -124,7 +120,6 @@ class OrderResponse(BaseModel):
         from_attributes = True
 
 
-# Dashboard Schema
 class DashboardStats(BaseModel):
     total_products: int
     total_customers: int
@@ -132,3 +127,29 @@ class DashboardStats(BaseModel):
     low_stock_products: List[ProductResponse]
     inventory_value: float = 0.0
     total_revenue: float = 0.0
+
+
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse

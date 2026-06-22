@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
 from .database import engine, Base
-from .routers import products, customers, orders, dashboard
+from .routers import products, customers, orders, dashboard, auth
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,20 +26,15 @@ app.add_middleware(
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
     errors = [{"field": ".".join(str(l) for l in e["loc"]), "message": e["msg"]} for e in exc.errors()]
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "Validation error", "errors": errors},
-    )
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"detail": "Validation error", "errors": errors})
 
 
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(_request: Request, _exc: IntegrityError):
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={"detail": "A record with the same unique value already exists"},
-    )
+    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"detail": "A record with the same unique value already exists"})
 
 
+app.include_router(auth.router)
 app.include_router(products.router)
 app.include_router(customers.router)
 app.include_router(orders.router)

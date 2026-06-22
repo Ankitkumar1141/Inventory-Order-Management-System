@@ -501,3 +501,52 @@ tr:hover td { background: var(--gray-50); }
 
   .stats-grid { grid-template-columns: 1fr 1fr; }
 }
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+  padding: 24px;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.auth-logo {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.auth-title {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--gray-500);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.error-msg {
+  background: #fef2f2;
+  color: var(--danger);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}

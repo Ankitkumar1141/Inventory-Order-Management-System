@@ -6,6 +6,9 @@ from pydantic import BaseModel, field_validator
 from ..database import get_db
 from ..models import Product
 from ..schemas import ProductCreate, ProductUpdate, ProductResponse
+from ..dependencies import get_current_user
+
+router = APIRouter(prefix="/products", tags=["Products"], dependencies=[Depends(get_current_user)])
 
 
 class StockAdjustment(BaseModel):
@@ -18,17 +21,12 @@ class StockAdjustment(BaseModel):
             raise ValueError("Quantity cannot be negative")
         return v
 
-router = APIRouter(prefix="/products", tags=["Products"])
-
 
 @router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     existing = db.query(Product).filter(Product.sku == product.sku).first()
     if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Product with SKU '{product.sku}' already exists"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Product with SKU '{product.sku}' already exists")
     db_product = Product(**product.model_dump())
     db.add(db_product)
     db.commit()
@@ -40,8 +38,8 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 def get_products(
     skip: int = 0,
     limit: int = 100,
-    search: Optional[str] = Query(None, description="Search by name or SKU"),
-    low_stock: Optional[bool] = Query(None, description="Filter low-stock items (qty <= 10)"),
+    search: Optional[str] = Query(None),
+    low_stock: Optional[bool] = Query(None),
     db: Session = Depends(get_db),
 ):
     q = db.query(Product)
@@ -56,10 +54,7 @@ def get_products(
 def get_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {product_id} not found")
     return product
 
 
@@ -67,19 +62,12 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 def update_product(product_id: int, product_update: ProductUpdate, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {product_id} not found")
     if product_update.sku and product_update.sku != product.sku:
         existing = db.query(Product).filter(Product.sku == product_update.sku).first()
         if existing:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Product with SKU '{product_update.sku}' already exists"
-            )
-    update_data = product_update.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Product with SKU '{product_update.sku}' already exists")
+    for field, value in product_update.model_dump(exclude_unset=True).items():
         setattr(product, field, value)
     db.commit()
     db.refresh(product)
@@ -90,10 +78,7 @@ def update_product(product_id: int, product_update: ProductUpdate, db: Session =
 def update_stock(product_id: int, body: StockAdjustment, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {product_id} not found")
     product.quantity = body.quantity
     db.commit()
     db.refresh(product)
@@ -104,9 +89,6 @@ def update_stock(product_id: int, body: StockAdjustment, db: Session = Depends(g
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with id {product_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product with id {product_id} not found")
     db.delete(product)
     db.commit()

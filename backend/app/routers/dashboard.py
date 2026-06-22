@@ -4,8 +4,9 @@ from sqlalchemy import func
 from ..database import get_db
 from ..models import Product, Customer, Order
 from ..schemas import DashboardStats
+from ..dependencies import get_current_user
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"], dependencies=[Depends(get_current_user)])
 
 LOW_STOCK_THRESHOLD = 10
 
@@ -16,14 +17,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     total_customers = db.query(Customer).count()
     total_orders = db.query(Order).count()
     low_stock_products = db.query(Product).filter(Product.quantity <= LOW_STOCK_THRESHOLD).all()
-
-    inventory_value = db.query(
-        func.coalesce(func.sum(Product.price * Product.quantity), 0.0)
-    ).scalar()
-
-    total_revenue = db.query(
-        func.coalesce(func.sum(Order.total_amount), 0.0)
-    ).scalar()
+    inventory_value = db.query(func.coalesce(func.sum(Product.price * Product.quantity), 0.0)).scalar()
+    total_revenue = db.query(func.coalesce(func.sum(Order.total_amount), 0.0)).scalar()
 
     return DashboardStats(
         total_products=total_products,
